@@ -1,0 +1,599 @@
+CV for identifying person in security cameras or in self driving cars for detecting objects in front of the car. In US postal service for reading the address.  The 
+steps for this are - 1.Identify areas where text are present on the mail.2.Segregate hand written text.3 Identofy nos. from hand written text. Identify where
+pin code is present.Extract pin code area and convert into digital nos.
+
+CV is artificially recreating the human vision in perceiving and understanding the images.
+
+Understanding pre-trained model--
+
+LeNet-5--It is 1 of the earliest CNN proposed by YannLeCun and his team in 1998.They used this architecture for Hand Written and Machine printed character recognition.
+It has simple and straight fwd architecture. LeNet-5 has 5 layers with learnable parameters. Architectural details-- 1. 3set of conv layers with avg pooling.after this,
+2 fully connected layers then softmax classiifer which classify images into there respective classes. The i/p to this model is 32*32 grey scale image hence 1 filter
+tf, 32*32*1--- conv(where filter size is 5*5,and we have 6 such filters)--tf, feature map of (28*28*6)---avg pooling or sub sampling and size of feature map is 14*14*6-
+---another conv layer of (16 filters of size 5*5)---gives feature map of (10*10*16)----another sub sampling or avg pooling layer----gives feature map of (5*5*16)---
+then final conv layer 120 filters of size 5*5.-- now resultant feature map has size 1*1*120--or-- 120----- after wich flattening results in 120 values.--This completes 
+the conv part and after this we have a fully connected layer with 84 neurons and finally o/p layer with 10 neurons. In the conv layers , tanh activation is applied.
+
+The total no.of parameters in this model are around 60000.
+
+AlexNet--It won the imagenet large scale visual recognition challenge in 2012.It was proposd by Alex Krizhevsky and his colleagues.It has 8 layers with learnable 
+parameters.Here,they have increased the depth of the n/w. Architectural detail--5 conv layers with combiantion of max pooling.followed by 3 fully connected layers.
+Activtion func used is Relu except in o/p layer.Also used dropout layers.Trained on imagenet dataset,this has around 14 million images.Thing to note here is bcoz
+AlexNet is a deep architecture,they used padding which prevented the size of feature map from reducing drastically.Input to this model is RGB image of size 227*227*3.
+--- conv1 96 filters of size 11*11 with stride=4====> gives feature mapof size 55*55*96 activation used - ReLU====> maxpool1---filter size=3*3, stride = 2,
+size of feature map = 27*27*96--->conv2 layer with 256 filters of size 5*5,stride=1,padding=2,size of feature map = 27*27*256 with activation= ReLu----MaxPooling 2 
+Layer------filter size 3*3,stride=2,size of feature map = 13*13*256---conv3layer with 384 filters of size 3*3,stride=1,padding=1,size of feature map = 13*13*384
+with activation-ReLU.===conv4 layer with 384 filters of size 3*3,stride=1,padding=1,size of feature map = 13*13*384 with activation= ReLU.Then final conv layer--
+conv5 layer with 256 filters of size 3*3,stride=1,padding=1,size of feature map = 13*13*256 with activation= ReLU. During the intital filter,since size is large,
+we are looking at a larger image and as the feature map size is decreasing , we are reducing the size of the filters as well.----then maxpooling3,filtersize=3*3
+stride=2,size of feature map=6*6*256--- first dropout layer with dropout rate=0.5,gives feature map size=6*6*256---FC1---with size of feature map=4096 and ReLu 
+activation func---second dropout layer,  with dropout rate=0.5,gives feature map size=4096----FC2---with size of feature map=4096 and ReLu activation func---
+FC1---with size of feature map=1000 and softmax activation func--- 1000 is the no.of classes in imagenet dataset.
+
+VGG16---First runner up in image net large scale visual recognition competition of 2014.Very deep conv n/ws for large scale image recognition.It has 16 layers 
+with learnable parameters.It is simpler bcoz kernel size of all the conv layers are fixed.Kernelsize = 3*3 for all conv layers,padding=1,stride=1 
+Trained on imagenet dataset of size 224*224*3.U cn see architecture of VGG-16.It has 13 conv layerrs+3 fc layers.Kernel size=3*3,stride=1,padding=1,
+Activation func= ReLU.Around 138 million parameters.
+
+3.4 Improvement 1 - Defining the model without using class format.ipynb------------------here we are using pytorch and not defining any class.
+improvement2-loading dataset efficiently using data loaders.Another concept is Torchvision transforms- pre written cods for transformations to be applied on images.
+tf, we can apply multiple trnsformations together by transforms.Compose func on all the images.
+
+3.6 Introduction to Data Loaders in PyTorch.ipynb-------------------------
+
+3.7 Implementing VGG16 using DataLoaders.ipynb----------------------------
+
+Inception module--This is a dl architecture and a pretraied model.We can see by increasing depth and width of the network,we can improve performance of our network.
+But doing this has other challenges--Higher chance of overfitting,increased no.of parameters.So to deal with increased parameters, a dimensionality reduction
+module is introduced which consists of (1*1 conv). Lets assume we have i/p of shape 14*14*512 and filter of size 3*3*64, srtride=1,padding=1, o/p=14*14*64---
+So,the no. of operations are- 14*14*512*3*3*64==57.8 million. Now,applying dimensionality reduction on i/p of shape 14*14*512 with filter of size 1*1*32,
+gives o/p of shape 14*14*32.NOw, on this o/p when we apply 3*3*64 filter ,stride=1,padding=1, o/p=14*14*64---So,the no. of operations are- 14*14*512*1*1*32==3.2 million
+and the no. of operations are- 14*14*32*3*3*64=3.6 million.tf, total no.of ops=3.2+3.6 =6.8 million ops.Another thing is wehave filters of diff shapes which can
+extract features of diff shappes.So,in the inceptionblock, we take i/p from previous layer and apply conv filter of diff size.1*1 conv,1*1 conv-->3*3 conv,
+1*1 conv-->5*5 conv,3*3 maxpool-->1*1 conv-->(at max pool layer,1*1 conv layer is applied afterwards because maxpool reduce the size of the i/p but the no.of channels
+doesn't change. ).
+
+4.2 Building your own Inception block in PyTorch.ipynb------------------here conv2d layer is used in branch 1.
+The i/p channels for these layers will be same as we pass in the init
+func and the no.of filters is set to 16 . Also since this isa 1*1 branch, the kernel size is set to 1.Note that the no. of filters for this layer and all the upcoming
+layers is a hyperparameter,. We have picked these valueslike 16,etc. just for exlplanation purposes 
+
+
+Finally,concatenate allthese operations o/p .
+
+Inception V1/GoogleNet pretrained model--it has 22 layers with leranable parameters.1st applies 2 initial conv layers with max pooling on i/p image--then we have
+9 inception modules and 2 fully connected layers.Trained on imagenet dataset. But it has vaishing gradient problm and the gradient could not be back propogated
+effectively.So,in inception v1 auxillary classifiers are introduced--They added 2 aux classifiers on top of the o/p from 3rd and 6th inception modules.
+These classifiers take the form of smaller convolutional network put on top ofthe o/ps of these inception modules.Due tothese auxiliary classifiers, the gradients
+can be backpropogated  to the initial layers of the model effectively.In auxilary classifiers--avg pooling with filter size:5*5,stride=3,1*1 conv with 128 filters
+for dimensioanlity reduction +relu.FC1 with 1024 neurons+ReLU.Dropout layer with rate 70%.Last FC layer with 1000 neurns + softmax.
+The aux classifiers are used only at training point and not at inference time.
+
+Total loss ofthe model=real_loss+0.3*aux_loss_1+0.3*aux_loss_2
+
+4.4 Implementing V1 for emergency vehicle classification.ipynb------
+
+
+ResNets--Problems with deep networks are---vanishing and exploding gradients hence the model doesnot learn.Its solution is--normalized weight initialization,
+adding batch normalzation.Another problem is with increasing depth of model,performance starts degrading rapidly.
+
+Residual learning---------------------
+in residual learning,plain block without skip connections looks like--previous layer o/p(X)---weighted layer or conv layer o/p(ReLu)--- 
+weighted or conv layer(o/p)----next layer i/p---o/p from this plain block is the learned func which we have denoted by F(x).Now, the residual block looks like--
+
+diag in diary-----------------In order to calc the o/p for the next layer, we take o/p fromthe previous weighted layer and in addition to this o/p , we addthe 
+we add the previous layer o/p as well.So, this F(x)+x helpsin solving degradation problem.The two skipped layers are called skip connection.and F(x) is called
+identity mapping.So, if we say,o/p y=F(x)+x ,because of this gradients can flow directly from the later layersto the earlier layer.
+F(x)=y-x.So layers in the plain block are learning the true o/p while in the residual block arelearning the residual F of x.Hence the name residual block.
+
+Building your own residual block in Pytorch---   
+ 
+
+Implementing inception v1 for emergency vehicle classification--
+ 
+ResNet uses residual architecture---It has 34 layers with learnable parameters.16 residual blocks,mostly 3*3 filters are used.Batch normalization layer is used 
+after each convolution operation to prevent vanishing gradient problem.Activation func- relu.Trained onimagenet dataset.
+
+Densenet--Densely Connected Conv layer
+Desnet further improved resnet i.e. flowof gradients betw the layers by connecting any layer to every subsequent layer.Arch details--mostly 3*3 conv are used.
+Batch norma and relu used before conv layers in dense blocks.1*1 conv is used to reduce size of feature map.Connects each layer toall the subsequent layer.
+Unlike resnet where we add the identity mapping element wise,in densenet we concatenate these features.Using the concatenated features,it reducs the computational
+complexity andencourages the reuse of features.
+Undersatnding dense block working--i/p-56*56*64---this i/p is sent to dense block--Now,i/p 1st goesthrough the fist block. Each individual block within this complete 
+dense block is a composite func consisiting of 3 ops which are batch normalization,followed by relu and finally conv op.So we apply 1*1 conv before applying 3*3 conv
+Also before each conv layer we apply a batch normalization and a relu layer.and no.of filters here are 128. tf,56*56*128.Then applying 3*3 conv and again before 
+applying the conv operation we have applied a batch normalization and a relu layer.Padding=1,so height  and width of the o/p feature map issameas the i/p.
+this will helpus in concatenating these features.So,we hav 32 filters of 3*3,hence o/pshape=56*56*32.This is the o/p of the 1st block of the o/p.
+and then we have 2nd block to which we give block1 o/p as input and i/p--56*56*64- as well.Then we have next block which has o/ps from all the previous blocks
+and the i/ps.
+1st dense block gives o/p of 56*56*256
+
+Implementing densenet in pytorch.ipynb-------------------------
+
+
+Object Detection--
+Object classification + object localization.
+
+Object detection tasks-Is an object present in the image?,Where is the object located?,What is the object?
+
+for the given i/p image wehave a target variable  which has 5 values-
+[P
+ x_min
+ y_min
+ x_max
+ y_max
+]
+
+P is the prob of object being present in an imge. rest are coordinates of the bounding box.x_min,y_min is top left corner and x_max , y_max is a bottom right corner.
+of the bounding box.Now,this target variable ans 2 ques-Is an object present in the image?,Where is the object located?Now,in case we have only single class in our
+image,then we donot have to worry about 3rd ques, but when there are more classes-then we have target variable like-
+
+[P
+ x_min
+ y_min
+ x_max
+ y_max
+ c1
+ c2
+....
+ cn
+]
+
+Understanding blood cell detection--
+Detect the WBCs in the images of Blood Cells.We will apply diff DL algos.In our image we have RBCs,WBCs and small black circles-platelets.For simplicity we are
+converting this problem into single class,single object problem.Hence we will jut consider WBC and ignore rest of the classes.Also we will only keepimages that
+has single WBC Classes.So,the images wich has multiple WBCs will be removed . Then,for each image wehave a bounding box eg.
+filename	xmin	xmax	ymin	ymax
+1.jpg		310	530	50	240
+
+(0,0)
+ ------------------->xmax
+|
+|
+|
+|
+v
+ymax 
+
+We donot have a Pvalue or a proba value here as we have created our dataset in such a way that all the images have exactly 1 wbc image.
+
+Naive approach of object detection--1.divide images into multiple patches.2.classify each of these patches.3.return patch coordinates as bounding box.
+Now,our training data is in format- 
+filename	xmin	xmax	ymin	ymax
+1.jpg		310	530	50	240
+these coordinaes are for the complete image-- but we are going to divide this image into 4  patches..so we will divide this coordinates into 4 patcheslike-
+since, the mid point of 640,480 == 320,240
+
+filename	patch	xmin	xmax	ymin	ymax	WBC(1/0)
+1.jpg		1	0	320	0	240 	0
+1.jpg		2	320	640	0	240	1
+1.jpg		3	0	320	240	480	0
+1.jpg		4	320	640	240	480	0
+
+Bounding box evaluation-Intersection of Union--Find out the actual and the predicted bounding box,The higher intersection of predicted and actual bb is a better 
+prediction.This overlap is called area of intersection.but having the area ofintersectionis not enough--we alsoneed to consider actual bb area.
+tf,IOU=(area of intersection)/(area of union) 
+We can use IOU as evaluating matrix,and for selecing best bounding boxes.
+
+Calculating IOU--how to find values of Area of Intersection and Area of Union.
+
+		x1_min	x2_min
+(0,0)		|	|    x1max  x2max
+	________|_______|_________________________________________x
+	|	|	|___________|
+y2min	|       |       |           |
+	| 	|	| box	2   |
+y1min	|	|_______.....	    |
+	|	|	.int.	    |
+y2max	|_______|______	....._______|
+	|	|	    |
+	|	|box 1	    |
+y1max	|_______|___________|
+	|
+	|
+	|
+	v
+	y
+
+the intersection box given by dots coordinates are (xmin,ymin)-top left and (xmax,ymax)- lower right.
+
+xmin in our case=max(x1min,x2min)
+xmax=min(x1max,x2max),then
+ymin=max(y1min,y2min)
+ymax=min(y2max,y1max)
+
+Area of intersection=(xmax-xmin)(ymax-ymin)
+
+Area of union-- now,box1 area=(x1max-x1min)*(y1max-y1min)
+box2 area=(x2max-x2min)*(y2max-y2min)
+now,int area is counted twice as it is the part of both box1 and box2 . Area of union=box1 area + box2 area - int
+
+IOU=Area of intersection/Area of union
+
+9.6 Implementing Naive approach one to solve blood cell detection problem.ipynb
+
+Naive approach 2----
+In a case where WBC is exactly at the center, none of the bb gives good prediction for predicting the particular WBC.
+In sucha case we can instead of dividing image into 4,we divide it into 16 patches.Then classify these patches.And return the batch patch coordinates as a bb value.
+
+Naive approach 3 -- if the imageto detect is rectangular,then diving images into equal size of squares will not solve the problem.this is the problemof object orientation
+So,we can have patches of different sapes.i.e. for individual square patch- consider a vertical and a horizontal patch.These are called anchor boxes.Becoz of this
+the no.of patches will inc but we will be sure of identifying image and in turn computation.
+
+Evaluation matrix for object detection--Intersection over union.Mean avg precision(mAP)--precioin=tp/(tp+fp)
+avg precision=1/n*summation(precision_i)
+
+Region based CNN-In RCNN for each i/p image aset of region proposals are generated.These are simply the selcted which may have an object.Selective search algois used
+for region selection.Then a CNN arch is applied which extracts features from the selected regions and not for classification of these regions.We then use these
+features for classification and localization of object and also for returning accurate bb for the object.
+
+
+Selective search--The image is made up of pixel values whre the diff values represent diff pixel intensities or the shades of color.This algo first creates many
+regions by grouping the similar pixel values together.The o/p ofthisimage is over segmented image because u can see even a singleobject is segmented into multiple
+parts.The guy itself is segmented into 3 parts.So tis over segmented image is not the best fit and hence the next step isto merge the adjacent similar regions 
+together.So,in next stepwe are going tolook for adjacent values and group thembased on similar color, texture,etc. and based on these similarities mrege this similar  
+data to form a single region.And this process keeps on repeating and at the end we have very less no.of patches.
+
+Region based CNN or RCNN--Forevery image ,1. the selective search algo gives 2000 probable regions that can have the object in them.Then we use CNN to extract features
+from the extracted regions.The arch consists of 5 conv layers and 2 dense layers.
+2. Using Alexnet architecture for feature extraction covered in alexnet modules,the
+i/p is 224*224*3 and o/p is 4096 vectors.
+3.classification and localization.The two taske here are of classiifcation and regression.Classification tells object class and regression tells object bounding box.
+For classification,binary SVM is used i.e. x1,x2,x3---x4096...which was produced by the alexnet architecture.And the o/p of this region is mapped using the existing
+training data that we hve.The target is determined using the actualbb which can be taken out fromthe traiing data.A seperate svmis trained fro every class in data.
+Ridge regeression is used for localization.
+Now,it has high training time and inference time. And feature vector is generated for every 2000 regions.Hence it cannot be implemented in real time.
+
+Fast RCNN--This significantly increase the object detection process.Here, the feature extraction process is done on complete image.So,instead of feeding 2000 images to
+the n/w we feed i/p image to the n/w and generate a feature map.Selective search is used togenerate the regions  and then a feature mapis generated for the complete
+image.It uses VGG16 Archi for feature generation process.Also only the conv an pooling layers are used to generate the features or extract these features.
+The regions are mapped to the feature maps.So we are not exracting regions for the feature maps individually, and finally map these regions to the feature map.
+
+SO,now we have features for these regions without having to map each region seperately.Also,instead of using maxpooling, we use ROI or region of interst pooling layer.
+Here in ROI pooling layer,we can directly specify the o/p shape for each region. So afer the pooling op,all the regions irrespective of their height and width
+are converted intothesame shape.It returns an o/p of shape 7*7*512.Then we have Fully conn layers.After this we have 2 dense layers - 1 for object classification
+and 2 for object localization.
+
+Faster RCNN-Conv and pooling layers are used to extract features of i/p image.This generated feature map is used to generate feature maps.And then the region 
+proposal n/w is bulid.In this the regions are generated with the help of anchor boxes.When we have a feature map, every pixel of the feature map is considered 
+as an anchor.Then te boxes of dif shapes and sizes are bulid.These are the anchor boxes.So, here we have 9 nchor boxes .These are then sent toRPN n/w.Region proposal
+n/w object is to predict whether they contain object or not.RPN has aconv n/w which takes in all of the boxes and then it has 2 layers for classification and regression.
+These selected regions are then given to ROI and next layers.tehn,FClayers for objrct classification and object localization. 
+
+Faster RCNN.ipynb-----
+
+Single stage n/ws--------
+You Only Look Once (YOLO) v1------It has a single stage learning process.i.e. it has only 1 n/w for training.Its faster tan RCNN family.Also,it has only conv and 
+pooling layers and they donot have a seperate n/w for generating the region proposals.Lets see how these layers replaceregion extraction process--The idea 
+here is we donot need a seperate n/w for region extraction process.The filters of the convlayer slide through the wholeimage,considering small portions of the image
+at a time. This is called sliding window problem.i.e.the n/w runs through the image once andgenerates some predicted value aso/p.This approach is used in YOLO.
+YOLO arch is also called as darknet.YOLO arch has 24 conv layrs,,1*1 reduction models are used,4 maxpooling layers and 2 final conv layers at the end.
+Finalo/p is of sahpe 7*7*30--understanding why 7*7*30--lets say we hav e ani/p image divide d into 7*7 grids.i.e. image is divided into 49 equal parts.
+
+and o/p from the n/w is ofthe shape 7*7*30.Now, this 30 values? for each grid in 7*7 , the algo pedicts 2 bb.So,foa particular grid,bb of diff shape is predicted.
+And for each bb we have 4 coord values, and 1 predicted probability.So for each bb we have 5 values.,and for 2 bb we have 10 values.Apart fromthis we also
+need to know,which class the particular bb belongs to?So we have additional 20 values for telling which class bb belong to.tf, 30 vlues.
+Now this will depend on the datset.
+
+Now,how to select the finalbb-NON max suppression is used.Along with each bb ,a prob value or the objectiveness score is returned.Firt step is to select a box,
+which hasa highest score or the highest prob of having n object.Afetr selecting this box,its iou is compared with other bboxes.If the IOU>threshold then only this 
+box is kept and delete all the other boxes with high overlap with selected box.
+repeating these steps again.
+
+YOLO limitations-it doesnt work for smaller objects.Unable to detect cluttered object in the images eg.image of flock of birds flying very close toone another.
+Not generalized for unusual aspect ratios.diffficulty in detecting object of diff scales.
+
+Single shot detector--SSD performs classification and localization in a single pass.This is alsoa single stage n/w.Uses VGG16 arch to generate feature map.
+It has a image pyramid n/w for multi scale feature maps for detection of diff objects for diff scales.So,the no.of bbs are comparatively higher than YOLO.
+Now,instead of using final feature map for prediction,feature map from the previous layers can also be used for making preds.It also uses the concept of anchor boxes.
+
+the classier size is--conv(grid size*(anchors*(BB+classes)))
+
+It also applies non max suppression. After which we get final bb for objects in the image.
+
+Yolo v2 and v3:-v2- 1.better detection of smaller objects-It divides the image into 13*13 grids. 2.Diff anchor boxes are used based on the dataset.
+Earlier yolo was not detecting cat in a big image if trained on a small image.So, in v2, the multiscale training is done.It is pretrained on imagenet images
+ofmultiple scales such as 224*224 then 448*448.
+batch normalization added after conv layers
+uses daarknet 19 architecture.
+it has reorganization layers--It takes every alternate pixel and puts itinto a diff channel. eg if--
+1 2 3 4
+5 6 7 8
+9 t e t
+t f f s
+
+then reorganization layer reorganize this into-
+1 3
+9 11
+
+2  4
+10 12
+
+tf,the i/p of 26*26*256 is converted into 13*13*2048. The benefit is we can carry over the info from the previous layer to these layers.Hence no.of channels herre
+are2048 and fromconv layer o/p of1024..these are then concatenated to give the o/p shape of 13*13**3072
+
+then we have the finalo/p which is generated for each 13*13 grid.and hence the shape13*40.
+
+yolov3--It uses multilabel classification.The idea here is,an individual grid can have more than 1 object class.So itreplaces softmax function with logistic classifier
+or a sigmoid activation func. Predictions are made at 3 diff scales using a tech called feature pyramid n/w. Like in SSD we had image parameter n/w.IN yolov3
+FPN  feature pyramid n/w provides a top down pathway in order to construct the high resolution layer from the final layer.So,instead of using finallayer for predictions
+we upsampled feature maps make them of the same size as the previous two feature maps,and then concatenated tomke the predictions.
+
+yolov3 uses darknet architecture--It has 53 layers,53 more are added to yolov3 arch,tf, total 106 layers fully convolutional underlying arch.
+
+
+retina net--We know higher avg prec better is the model.The poor performance of single stage n/w are - class imbalance--betw background class and object class.
+In retina net ,they introduced focal loss,so moreimportance is given to object class and high penalty for misclassifying the object class.
+categorical log loss==It is the negative avg of the log of predicted class probabilities.The changes are applied to this todeal with class imbalance --
+1st a waiting factor called alpha was applied to log of probabilities..alpha is set higher for the classes wich have alower freq.In practice, alpha can be set
+as the inverse of a class freq as well.This is done to handle class imbalance. So, background classes have weight of 0.25 and background classes have weight of0.75
+
+Another change is penalty parameter.This parameter isused to downwait the egs which are easily classified.So,the object classes which are easily classified by
+the classifier.logloss= -1/N*summation_i(1toN)*summation_j(1toM)x_ij*alpha_i*(1-p_ij)^gamma*log(p_ij)--- gamma is toadjust the rate at which easy egs andthe
+hard egs contribute tothe complete loss.Its backbone archit is that of resnet,uses fpn for multiscale pred.Anchor boxes of 3 diff aspect ratios areused.
+
+Implementing retina net using detectron2 library---Detectron2 is built over pytorch.It ismainly used for object detection and segmentation task.Built by facebookAI
+research team.Some imp modules of this library are--data,model_zoo,config,engine,utils.visualizer
+1.data--use one of the existing datasets or, add data to existing DatasetCatalog and define related attrs (class names) MetadataCatalog
+
+2.model_zoo--consisits of weights of pretrained models like RPN,Fast R-CNN,Faster R-CNN,RetinaNet,MAsk R-CNN,etc.For the  detection problem , itrequires
+following data format--dictionary to store--imageid,image width,image height,if multiple bb are there then target list will have there bb coordinates and respective
+classes..
+
+3.config-has default configuration files.To use the pretrained model, 1st load this config file and then update it based onthe model and the architecture that we want
+to use.
+
+4.engine-for training and prediction.
+
+5.utils.visualizer-visualize data and bbs,requires i/p image and box coordinates and objective codesthat we received from predcitions.
+
+
+Face Detection---
+We are going to understand use case of objet detection which is face detection. Task is toidentify faces and their locations in an image.We can have single or
+multiple faces in an image.
+Understanding the problem -- objective is to build a face detection system--Dataset used is WIDER face-- a face detection benchmark .
+It contains morethan 32000images with 393703 images,has high variability in scale,pose and occlusion.The dataset is grouped into3 scales--small, medium & large.
+occlusion into-no occlusion,partial occl,heavy occlu.It has faces from 60 event categories like parade,festive,football,etc.
+This is further divided into 3 sets based on detection-easy,medium and hard.
+
+We will be working with easy ones.
+
+data preperation for detectron2--All the pretrained models are trained on coco dataset--a large scale image dataset.WIDER face annotation-First we have file name,
+no.of faces present in a image-- inour case 1 image , and bb annotation.bb format-xmin,ymin,height,width,then values representing diff measures of variability,
+Now, we need to convert this into detectron2 format.1st we have a dict for bbs.the category id represents te category of this image-then we have to pass te file
+name,which will be the name of the image.followed by theheight--this is the height of the entire image,then we have width and the imageid.
+
+Steps to solve face detection problem using detectron2-- make folder in drive Wider_faces-put --easy.txt,wider_face_split.zip,WIDER_train.zip,WIDER_val.zip---
+
+12.5 Detecting Single Faces using Detection.ipynb
+
+12.6 Detecting Multiple Faces using Detection.ipynb
+
+Pose Detection---predicts and tracks the location of a person or object.This is done by looking at the combination of pose and the orientation of the given person,
+or object.This involves--identifying and locating object of interest. Then track keypoints to determine the pose, which can be elbow , knees and so on.
+There is a distinction between identifying single object or multiple object in an image or video. So these 2 approaches can be referred to as  single and multiple pose 
+detection and are mostly self explanatory.
+
+
+So, with this we are able to track a person in real world space at an incredibly granular level.Because of this it has wide range of possibilities.Like virtual yoga trainer,in gaming.
+
+coco keypoint challenge---objective to determine person key points from images.The model takes images as i/p and predict 2 things--1st bb around the person.
+2nd key points for the person.To train such model, we will be working with coco keypoint dataset.It has 58945 images seperated into trainging and validation dataset.
+It includes around 156,165 annotated people and around 17million key points.The 17 types of keypoints are like -- nose,left eye,right eye,left ear, right ear,etc.
+
+Each keypoint is represented using ( x,y,v ) where x and y are pixel locaitions and v represents visibility.
+if v=0,not labelled (in which case x=y=0)
+v=1, labelled but not visible.
+v=2,labelled and visible.
+
+We will not train our model on the entire dataset becuase that will require a huge amount of computational resources.So we will take small sample of dataset.
+we will use detectron. Steps are-- 1. install dependencies. 2. load and pre process the data.3. loading and training dataset.4. evaluate model performance.
+
+13.4 building your own pose detection model.ipynb---------pose_dataset-200715-173328---------------------
+
+cricket shot classification------------
+
+classifying cricket shot using the pose of a palyer--- The dataset has 290 images representing 4 different types of shots or 4 classes which are cut,drive,sweep,pull.
+around 70 images for each class.Now this is a small dataset, so we will be having shortage of data.Detectron2 to build post detection model.Steps will be--
+installing dependencies like detectron2 library, load and preprocess dataset, applying image augmentation tech, we will take pre trained model to generate the pose.
+then we will build our own nn modelwhich will take the pose of a person as i/p and classify the type of shot using that pose,evaluating model performance.
+
+
+14.2 Classifying Cricket Shot using pose of the player.ipynb-----------------------
+
+Image segememtation-------------------------
+When instead of having single object, we can have multiple objects in the image then we have to find different objects present in the image.This can be multi-class
+classiifcation problem. Now, if the que is what are the objects? where are they present?So for this we can do classifiactiona as well as localization, i.e. drawing bb.
+This is object detection problem.Now, if we want exac location of object, then we need to do image segmentation.Which is a task of partitioning an image intomultiple segments based on the object present and there semantic importance.This gives exact pixel wise location.Its applications into medical--like cancer cell segmentation,self driving cars etc. Different types are- semantic segmentation- describe the process of associating each pixel of an image with a class label.
+Instance segmentation--masks each instance of an object contained in an image independently.We only focus on the object of importance frist,and then identify instances of an object.
+Then,there is penoptic segmentation--combination of rest 2.
+
+How to do image segmentation?===We need to do pixel wise segemntation of an image.The target is called segmentation masks.The problem is to find WBC from an image.
+and we will be dealing with binary segmentation problem.
+
+Approach 1-- simple methods thresholding--simply convert the image to grey scale,apply the right threshold,cal iou score. Each images_BloodCellSegmentation
+and targets_BloodCellSegmentation has 100 data. extension bmp for bimtmap image.Challenges with this method are-involoves hard coding threshold value,
+diff images can have diff thresholds, diff objects can have same color.
+
+16.2 Approach 1 - Simple methods for Image Segmentation.ipynb
+
+Anther method clustering---
+16.2 Approach 1 - Simple methods for Image Segmentation (Clustering).ipynb
+
+cons- manual filtering for apperopriate cluster.Different classes can have same color.
+
+Next applying dl---- steps=1. divide image into patches for every pixel.2. classify each patch.3.return o/p as a heatmap of predictions.4. threshold heatmap.
+applying cnn model --this model takes image and produce heatmap. i.e i/p===>conv+hidden_layer (feature extractor)===>o/p layer----Now here the last layer should also have an image as o/p that has the height and width of i/p image.So instead of having flattened layer followed by hidden layer and the o/p layers in a cnn n/w we replace it by anothe conv+sigmoid layer which now act as o/p layer.So the o/p is specially oriented one. And then it can be directly compared with the ground truth mask with the usual cross entropy loss. 
+cons-- the o/p might not be of the same shape as cnn, becz cnn has pooling layers,padding,stride,etc..So, keeping stride=1 and padding=1
+
+16.3 Approach 2 - Naive Deep Learning based Approach.ipynb----------------------
+
+approach 3--end to end system---
+doing inverse pooling by binary interpolation--This is apopular image segmentation techni for texture mapping. The bilinear interpolation uses values of the 4 nearest pixels located and the diagonal direction , in order to find appropriate color intensity for the o/p.Lets say we have 2*2 matrix with values--
+5	11
+10	15
+
+now bilinear interpolation put these values first into corner of 4*4 matrix and fill the inbetween values in gradually increasing or decreasing order.
+5	6	9	11
+6	8	10	12
+9	10	12	14
+10	11	14	15
+
+There is another approach called max unpooling--also called as inn/w upsampling.
+
+Now, tackling Conv layer hyperparameters---by transpose conv--
+i/p = 3*3
+
+1	2	3
+4	5	6
+7	8	9
+
+filter size=3*3
+stride=2
+padding=1
+0	0	0	
+1	1	1	
+0	0	0
+
+Take the first pixel of i/p i.e. 1 and bradcast it into 3*3 matrix.then do the element wise multiplication of this broadcast matrix and filter matrix.
+
+i.e. broadcast matrix 3*3-
+1	1	1
+1	1	1
+1	1	1
+
+and the result is stored like-----
+
+0	0	0	
+1	1	1	
+0	0	0
+
+now for next pixel broadcast is done--
+2	2	2
+2	2	2
+2	2	2
+
+then do the element wise multiplication of this broadcast matrix and filter matrix.--
+
+since, the stride=2, we have shifted the window by 2 and at the intersection, the values are added.
+
+0	0	0+0	0	0	
+1	1	1+2	2	2	
+0	0	0+2	0	0
+
+and this process keeps repeating for whole image.
+
+0	0	0+0	0	0+0	0	0	
+1	1	1+2	2	2+3	3	3		
+0	0	0+2	0	0+0	0	0
+
+
+so, we have 7*7 matrix here---and without padding the o/p shape is 5*5 like--
+
+1	3	2	5	3
+0	5	0	0	0
+4	9	5	11	6
+0	0	0	0	0
+7	15	8	17	9
+
+This is alos known as fractional strided conv or learnable upsampling.
+
+Now, to deal with simplistic dl model we can apply, encoder decoder
+
+16.4 Approach 3 - Using Encoder Decoder model + MaxUnpooling.ipynb--------
+
+16.4 Approach 3 - Using Encoder Decoder model + MaxUnpooling + Transpose Convolution.ipynb---------
+
+Understanding deep learning architectures for image segmentation----
+We need better architectures for dl, in order to improve our performance in solving the blood cell segmentation task.3 family which are used in industry are--
+U-Net,DeepLab,R-CNN
+U-Net - encoder and deco nw with skip connections.->conv 3*3 relu activation for feature extraction,max pool 2*2; but u can hyper parameter tune them.
+These can work on small dataset and can give accurate results.IOt can be extended to 3 d with just a few modifications.
+
+blood cell segmentation using unet.ipynb-----
+torch.hub is used to load our unit architecture.It has a no. of pre trained models .
+
+DeepLabv3----encoder and deco nw with depthwise seperable conv and point wise seperable convs. encoder for feature extraction, decoder for segmentation mask reconstruction.Spatial pyramid pooling nws to capture multi scale info.Here in spatial pyramid pooling, we have difference in the pooling window size.Atrous convolutions or dilated convolutions for larger effective field of view and to reduce computational complexity.
+
+Mask R-CNN family----: It is build upon a faster R-CNN architecture,but we apply segementation mask along with classification and box regression.
+So, it is trained for 3 tasks--clasification ,localizatoin and segmentation.The feature extraction can be done by any of pretrained models like resnet or feature
+pyramid models.It is more popularly used for instance segmentation task.
+
+
+Lane Segemntation for self driving systems----
+for simplicity We will focus on finding where is the road.IOu is used. Pixel wise accuracy=(no. of correct predictions)/(total no. of values)
+loss func will be binary cross entropy.also,dice score=(2*area of intersection)/total area. Dice score is preferred over iou when we want to consider pixel wise acc.
+becuse they both are positively correlated.
+
+https://github.com/mrgloom/awesome-semantic-segmentation
+
+https://medium.com/kaggle-blog/carvana-image-masking-challenge-1st-place-winners-interview-ea90e584fd0e
+
+Image generation---
+it is usd to generate new images which does not belong to training dataset but completely resembles them.Understanding generative adversial n/w or GANs.Then project on texture generation using gans.
+
+1.It can be used for synthetic dataset creation.2. Image editing -reconstructing variations.3. Detecting forgery in artistic paintings.
+
+What are generative models---These learn the distribution from the training set.Then generate the new observation using the learned distribution.
+Types of generative models--1st way is to model the problem as a density estimation problem and directly try to learn the problem distribution of the origianl data.
+eg pixel rnn/cnn, variational autoencoder.
+
+2nd way instead of learning directly,we learn to predict the samples of the data iteratively.In the hope that we get the generative model that predicts the sample that belong to the original asmple only. eg. generative adversial n/w or GANS,boltzman m/c.
+
+GANs-we have a dataset containing the real images and a model called a generator n/w which creates fake images based on a random distribution.These real and fake images are fed into another model called the discriminator which distinguishes between a real and fake images.The generator and the discriminator are trained simultaneously and both generator and discriminator get better in solving there task overtime.Mathematically, this inrteraction beteen the generator and discriminator can be formulated as a minmax problem, which is a well known techmology used in game theory.
+A simple GAN architecture has MLP based generator along with an MLP based discriminator n/w.In the 1st pass we get the real images form our original data and the fake images generated by the generator and then we train our discriminator on the combined batches of images.During this pass we freeze the generator i.e. we will only update the weights of the discriminator n/w and not the generator n/w. In the 2nd pass we only get the fake images form our discriminator n/w and back propogate the errors to train the generator.Here we freeze the discrimainator i.e. we will only generate the weights of the gemnerator n/w 
+
+Formal training og GANS-1.Define architecture of discriminator, 2.Define architecture of generator.3. train discriminator-i.e. take samples form the real data,
+generate fake data from generator, update parameters of discriminator on the combined batch. Step 3 is repeated for 1 or more iterations. Step 4-train generator,
+Update the parameters of generator on how well the discriminator is fooled.Step 5-check if the fake data visually if it seems legit.If yes , stop training else goto step 3.
+
+Texture generation using GANSs--we are generating innovative textures on the basis of the data set of images.So the task of dl based GANS models to hypothetically understyand the distribution of texture and then bring out a sample that potentially belong to tha sample of that data.
+
+Better GAN Architectures-DC_gans----instead of MLP based GAN having dense layer for feature extraction--a fully Conv based architecture is used.
+
+Better GAN Architectures-WGAN and PGAN--Wasserstein GANs and Progressive GANs. It deals with vanishing gradient and mode collapse.Wasserstein loss is also known as earth-mover distance . If the real loc belong to loc1 of feature space and fake images belong to a seperate location in the feature space,this means that
+generator is not able to correctly generate appropriate samples.Now, in this case if the discriminator is performing well, it will be able to differentiate between real and fake , and their will be very less information which is passed on by the crossentropy loss func,creating vanishing gradient problem.So, instead wasserestein loss is used , the gradient wont vanish and hence the GANS will drain.
+
+20.1...ipynb
+
+https://github.com/facebookresearch/pytorch_GAN_zoo
+
+21.----ipynb
+
+link to certificate---
+https://courses.analyticsvidhya.com/certificates/m5w7b1bhjn
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
+ 
+
+   
+
+
+
+
+
+ 
+
+
+
+
+
+
+
+
+
+
+
+
